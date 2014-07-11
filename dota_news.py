@@ -1,10 +1,13 @@
 #!/usr/bin/python
 
 import json
+import keys
 import os.path
 import random
 import re
 import requests
+import string
+import twitter
 import urllib
 import xml.etree.ElementTree as ET
 
@@ -13,6 +16,15 @@ pwd = '/home/amarriner/python/dota_news'
 
 # Regex to temporarily strip non alpha characters from a word
 p = re.compile('[^A-Za-z]')
+
+# List of RSS feeds
+feeds = []
+feeds.append('http://www.tmz.com/category/hook-ups/rss.xml')
+feeds.append('http://www.tmz.com/category/celebrity-feuds/rss.xml')
+feeds.append('http://www.tmz.com/category/celebrity-justice/rss.xml')
+feeds.append('http://www.tmz.com/category/gossip-rumors/rss.xml')
+feeds.append('http://www.tmz.com/category/party-all-the-time/rss.xml')
+feeds.append('http://www.tmz.com/category/stars-in-heat/rss.xml')
 
 # Read in a list of words
 f = open('words.txt')
@@ -36,8 +48,8 @@ f = open('heroes.json')
 heroes = json.loads(f.read())
 f.close()
 
-# Read RSS feed from People
-request = requests.get('http://www.tmz.com/category/party-all-the-time/rss.xml')
+# Read random RSS feed from TMZ
+request = requests.get(random.choice(feeds))
 root = ET.fromstring(request.content)
 headline = random.choice(root.findall('*/item/title')).text.split(' ')
 
@@ -45,6 +57,8 @@ headline = random.choice(root.findall('*/item/title')).text.split(' ')
 # Not perfect because some names do appear in the word list
 i = 0
 tweet = ''
+found = False
+image = ''
 while i < len(headline):
    w = p.sub('', headline[i].upper())
 
@@ -62,16 +76,28 @@ while i < len(headline):
 
             # Replace the name we've found with the hero's name
             # Can be improved, assumes a last name in the next slot, but doesn't always happen
-            tweet = tweet + hero['localized_name'].title() + ' '
+            tweet = tweet + hero['localized_name'] + ' '
+            image = hero['name'].replace('npc_dota_hero_', '') + '.png'
             i = i + 1
 
+            # Flag to ensure we only tweet when we've made a name replacement
+            found = True
+
          else:
-            tweet = tweet + headline[i].title() + ' '
+            tweet = tweet + headline[i] + ' '
 
       else:
-         tweet = tweet + headline[i].title() + ' '
+         tweet = tweet + headline[i] + ' '
+
+   else:
+      tweet = tweet + headline[i] + ' '
 
    i = i + 1
 
 # Tweet
-print tweet
+if found:
+   # Connect to Twitter
+   api = twitter.Api(keys.consumer_key, keys.consumer_secret, keys.access_token, keys.access_token_secret)
+
+   # Post tweet text and image
+   status = api.PostMedia(tweet, pwd + '/images/' + image)
