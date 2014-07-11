@@ -27,12 +27,12 @@ feeds.append('http://www.tmz.com/category/party-all-the-time/rss.xml')
 feeds.append('http://www.tmz.com/category/stars-in-heat/rss.xml')
 
 # Read in a list of words
-f = open('words.txt')
+f = open(pwd + '/words.txt')
 words = f.read().split('\n')
 f.close()
 
 # Read in a list of names
-f = open('names/yob2013.txt')
+f = open(pwd + '/names/yob2013.txt')
 names = f.read().split('\n')
 f.close()
 
@@ -44,7 +44,7 @@ while i < len(names):
 
 # Read in a JSON file of Dota 2 heroes
 # From WebAPI: https://api.steampowered.com/IEconDOTA2_570/GetHeroes/v0001/?key=<API_KEY>&language=en_us
-f = open('heroes.json')
+f = open(pwd + '/heroes.json')
 heroes = json.loads(f.read())
 f.close()
 
@@ -100,4 +100,4 @@ if found:
    api = twitter.Api(keys.consumer_key, keys.consumer_secret, keys.access_token, keys.access_token_secret)
 
    # Post tweet text and image
-   status = api.PostMedia(tweet, pwd + '/images/' + image)
+   status = api.PostMedia(tweet.replace('(VIDEO)', '').replace('(PHOTOS)', ''), pwd + '/images/' + image)
